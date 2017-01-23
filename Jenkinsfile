@@ -114,7 +114,7 @@ ansiColor('xterm') {
 
             retry(3) {
               dir('docker/builder') {
-                image = docker.build(DOCKER_IMAGE_NAME, './docker/builder')
+                image = docker.build(DOCKER_IMAGE_NAME)
               }
               // Reset the Dockerfile to make sure we don't accidentally commit it
               // later
