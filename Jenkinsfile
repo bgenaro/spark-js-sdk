@@ -251,7 +251,7 @@ ansiColor('xterm') {
                 }
 
                 stage('publish to ghe') {
-                  def exitStatus = script: 'git remote | grep -qc ghe', returnStatus: true
+                  def exitStatus = sh script: 'git remote | grep -qc ghe', returnStatus: true
                   if (exitStatus == 1) {
                     sh 'git remote add ghe git@sqbu-github.cisco.com:WebExSquared/spark-js-sdk.git'
                   }
