@@ -123,14 +123,24 @@ ansiColor('xterm') {
           }
 
           stage('install') {
-            image.withRun("${DOCKER_RUN_OPTS} npm install")
-            image.withRun("${DOCKER_RUN_OPTS} npm run bootstrap")
+            image.inside(DOCKER_RUN_OPTS) {
+              sh 'npm install'
+            }
+            image.inside(DOCKER_RUN_OPTS) {
+              sh 'npm run bootstrap'
+            }
           }
 
           stage('clean') {
-            image.withRun("${DOCKER_RUN_OPTS} npm run grunt -- clean")
-            image.withRun("${DOCKER_RUN_OPTS} npm run grunt:concurrent -- clean")
-            image.withRun("${DOCKER_RUN_OPTS} npm run clean-empty-packages")
+            image.inside(DOCKER_RUN_OPTS) {
+              sh 'npm run grunt -- clean'
+            }
+            image.inside(DOCKER_RUN_OPTS) {
+              sh 'npm run grunt:concurrent -- clean'
+            }
+            image.inside(DOCKER_RUN_OPTS) {
+              sh 'npm run clean-empty-packages'
+            }
             sh 'rm -rf ".sauce/*/sc.*"'
             sh 'rm -rf ".sauce/*/sauce_connect*log"'
             sh 'rm -rf reports'
@@ -165,7 +175,9 @@ ansiColor('xterm') {
           }
 
           stage('build') {
-            image.withRun("${DOCKER_RUN_OPTS} npm run build")
+            image.inside(DOCKER_RUN_OPTS) {
+              sh 'npm run build'
+            }
           }
 
           if (currentBuild.result == 'SUCCESS') {
@@ -182,7 +194,9 @@ ansiColor('xterm') {
 
           if (currentBuild.result == 'SUCCESS') {
             stage('process coverage') {
-              image.withRun("${DOCKER_RUN_OPTS} npm run grunt:circle -- coverage")
+              image.inside(DOCKER_RUN_OPTS) {
+                sh 'npm run grunt:circle -- coverage'
+              }
               archive 'reports/cobertura.xml'
 
               // At the time this script was written, the cobertura plugin didn't
