@@ -230,7 +230,7 @@ ansiColor('xterm') {
                     env.NPM_CONFIG_REGISTRY = registry
                     sh 'rm -f ~/.npmrc'
                     version = sh script: 'echo "v$(cat lerna.json | jq .version | tr -d \'\\"\')"', returnStdout: true
-                    if (version.length === 0) {
+                    if (version.length == 0) {
                       currentBuild.description += 'warning: could not determine tag name to push to github.com\n'
                     }
                     else {
@@ -266,7 +266,7 @@ ansiColor('xterm') {
                   // publishing to artifactory once the legacy sdk goes away and
                   // (b) the npm secret is only recorded in that job.
                   def artifactoryBuild = build job: 'spark-js-sdk--publish-to-artifactory', propagate: false
-                  if (artifactoryBuild.result !== 'SUCCESS') {
+                  if (artifactoryBuild.result != 'SUCCESS') {
                     currentBuild.description += 'waring: failed to publish to Artifactory'
                   }
                 }
@@ -274,7 +274,7 @@ ansiColor('xterm') {
                 stage('publish to cdn') {
                   // Disabled for first pass. Will work with Lex to adjust cdn jobs
                   // cdnPublishBuild = build job: 'spark-js-sdk--publish-chat-widget-s3', parameters: [[$class: 'StringParameterValue', name: 'buildNumber', value: currentBuild.number]], propagate: false
-                  // if (cdnPublishBuild.result !== 'SUCCESS') {
+                  // if (cdnPublishBuild.result != 'SUCCESS') {
                   //   currentBuild.description += 'warning: failed to publish to CDN'
                   // }
                 }
