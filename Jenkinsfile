@@ -113,7 +113,9 @@ ansiColor('xterm') {
             sh 'echo "USER $(id -u)" >> ./docker/builder/Dockerfile'
 
             retry(3) {
-              image = docker.build(DOCKER_IMAGE_NAME, './docker/builder')
+              dir('docker/builder') {
+                image = docker.build(DOCKER_IMAGE_NAME, './docker/builder')
+              }
               // Reset the Dockerfile to make sure we don't accidentally commit it
               // later
               sh "git checkout ./docker/builder/Dockerfile"
