@@ -1,6 +1,5 @@
 // TODO aborts need to kill docker containers
 // TODO check build log for disconnect/reconnect
-// TODO add --silent to npm run commands
 
 def generateDockerEnv = { ->
   def dockerEnv = ""
@@ -80,7 +79,8 @@ ansiColor('xterm') {
           env.ENABLE_VERBOSE_NETWORK_LOGGING = true
           env.SDK_ROOT_DIR=pwd
 
-          DOCKER_CONTAINER_NAME = "${JOB_NAME}-${BUILD_NUMBER}-builder"
+          DOCKER_IMAGE_NAME = "${JOB_NAME}-${BUILD_NUMBER}-builder"
+          def image = docker.image(DOCKER_IMAGE_NAME);
 
           DOCKER_ENV_FILE = "${env.WORKSPACE}/docker-env"
           ENV_FILE = "${env.WORKSPACE}/.env"
@@ -92,7 +92,7 @@ ansiColor('xterm') {
           DOCKER_RUN_OPTS = "${DOCKER_RUN_OPTS} -e NPM_CONFIG_CACHE=${env.WORKSPACE}/.npm"
           DOCKER_RUN_OPTS = "${DOCKER_RUN_OPTS} --volumes-from=\$(hostname)"
           DOCKER_RUN_OPTS = "${DOCKER_RUN_OPTS} --user=\$(id -u):\$(id -g)"
-          DOCKER_RUN_OPTS = "${DOCKER_RUN_OPTS} ${DOCKER_CONTAINER_NAME}"
+          DOCKER_RUN_OPTS = "${DOCKER_RUN_OPTS} ${DOCKER_IMAGE_NAME}"
           env.DOCKER_RUN_OPTS = DOCKER_RUN_OPTS
 
           stage('checkout') {
@@ -113,7 +113,7 @@ ansiColor('xterm') {
             sh 'echo "USER $(id -u)" >> ./docker/builder/Dockerfile'
 
             retry(3) {
-              sh "docker build -t ${DOCKER_CONTAINER_NAME} ./docker/builder"
+              image = docker.build(image, './docker/builder')
               // Reset the Dockerfile to make sure we don't accidentally commit it
               // later
               sh "git checkout ./docker/builder/Dockerfile"
@@ -121,14 +121,14 @@ ansiColor('xterm') {
           }
 
           stage('install') {
-            // sh "docker run ${DOCKER_RUN_OPTS} npm install"
-            // sh "docker run ${DOCKER_RUN_OPTS} npm run bootstrap"
+            image.run(${DOCKER_RUN_OPTS}, 'npm install');
+            image.run(${DOCKER_RUN_OPTS}, 'npm run bootstrap');
           }
 
           stage('clean') {
-            sh "docker run ${DOCKER_RUN_OPTS} npm run grunt -- clean"
-            sh "docker run ${DOCKER_RUN_OPTS} npm run grunt:concurrent -- clean"
-            sh "docker run ${DOCKER_RUN_OPTS} npm run clean-empty-packages"
+            image.run(DOCKER_RUN_OPTS,  "npm run grunt -- clean"
+            image.run(DOCKER_RUN_OPTS,  "npm run grunt:concurrent -- clean"
+            image.run(DOCKER_RUN_OPTS,  "npm run clean-empty-packages"
             sh 'rm -rf ".sauce/*/sc.*"'
             sh 'rm -rf ".sauce/*/sauce_connect*log"'
             sh 'rm -rf reports'
@@ -163,7 +163,7 @@ ansiColor('xterm') {
           }
 
           stage('build') {
-            // sh "docker run ${DOCKER_RUN_OPTS} npm run build"
+            // image.run(DOCKER_RUN_OPTS,  "npm run build"
           }
 
           if (currentBuild.result == 'SUCCESS') {
@@ -180,7 +180,7 @@ ansiColor('xterm') {
 
           if (currentBuild.result == 'SUCCESS') {
             stage('process coverage') {
-              sh "docker run ${DOCKER_RUN_OPTS} npm run grunt:circle -- coverage"
+              image.run(DOCKER_RUN_OPTS,  "npm run grunt:circle -- coverage"
               archive 'reports/cobertura.xml'
 
               // At the time this script was written, the cobertura plugin didn't
